@@ -1,0 +1,32 @@
+def programa():
+
+    numero = int(input("dime un solo numero: "))
+    numero1 = int(input("dime otro numero: "))
+    resultado = numero + numero1
+
+    print("el resultado de la suma es", resultado)
+
+    nombre = input("Cual es tu nombre: ")
+    print("Bienvenido", nombre)
+
+    numero4 = int(input("dime un solo numero: "))
+    numero16 = int(input("dime otro numero: "))
+    resultado2 = numero4 + numero16
+
+    print("el resultado de la suma es", resultado2)
+
+    volver = input("¿quieres volver a probar mi programa?: ")
+
+    if volver == "si":
+        programa()
+    else:
+        print("gracias por visitarnos, hasta luego")
+
+
+preguntar = input("¿quieres probar mi programa?: ")
+
+if preguntar == "si":
+    programa()
+else:
+    print("gracias por visitarnos, hasta luego")
+    

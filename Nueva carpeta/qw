@@ -1,0 +1,18 @@
+while True :
+    opcion = input("¿Qué quieres hacer? \n 1. Saludar \n 2. ver la hora \n 3. Salir \n 4. Sumar dos números ")   
+    if opcion == "1":
+        nombre = input("¿Cuál es tu nombre? ")
+        print("Hola", nombre, "¡Bienvenido!")
+    elif opcion == "2":
+        import datetime
+        ahora = datetime.datetime.now()
+        print(datetime.datetime.ctime(ahora))
+    elif opcion == "3":
+        print("¡Hasta luego!")
+        break
+    elif opcion == "4":
+     numero1 = int(input("Dime el primer número: "))
+     numero2 = int(input("Dime el segundo número: "))
+     resultado = numero1 + numero2
+    
+     print("El resultado de la suma es:", resultado)  

@@ -1,0 +1,11 @@
+numero = int(input("dime y sumo 1   "))
+preguntar = input("quieres hacer esto. esto dañara tu computadora ")  
+if preguntar == "si" or preguntar == "Si" or preguntar == "SI" or preguntar == "hay si murillo":    
+    preguntar_2 = input("presiona cualquier letra para continuar pero si quieres salir escribe y para salir no agas nada ")
+    while numero >= 1 :
+        print(numero)
+        numero = numero + 1
+else:
+    print("ok no lo haremos")
+    print("gracias por no dañar tu computadora")
+

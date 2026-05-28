@@ -1,0 +1,37 @@
+import webbrowser
+import time
+
+nombre = ""
+
+print("IA iniciada...")
+
+while True:
+
+    texto = input("Tu: ").strip().lower()
+
+    if texto == "":
+        print("IA: Lo siento, no entendí lo que dijiste.")
+
+    elif texto == "quien eres?":
+        print("IA: Soy un asistente virtual creado por Aldrin.")
+
+    elif texto == "hola":
+
+        print("IA: Hola, ¿cual es tu nombre?")
+
+        nombre = input("Tu: ")
+
+        print("IA: Hola " + nombre + ", es un placer conocerte!")
+
+    elif texto == "cual es mi nombre?":
+
+        if nombre != "":
+            print("IA: Tu nombre es " + nombre)
+
+        else:
+            print("IA: Aun no me has dicho tu nombre.")
+
+    elif texto == "que hora es?":
+        print("IA: La hora es", time.ctime())
+
+   

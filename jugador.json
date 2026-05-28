@@ -1,0 +1,10 @@
+{
+    "nombre": "Aldrin",
+    "nivel": 156,
+    "monedas": 350,
+    "inventario": [
+        "Espada",
+        "Pocion",
+        "Escudo"
+    ]
+}

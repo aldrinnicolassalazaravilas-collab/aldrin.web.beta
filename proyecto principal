@@ -1,0 +1,108 @@
+import  flask 
+import flask
+from flask import request
+import time
+
+
+
+app = flask.Flask(__name__)
+historial = []
+
+while True:
+    pregunta = input("¿que accion quieres realizar? escribe acciones para ver las acciones disponibles:")
+    historial.append(pregunta)
+    if pregunta == "acciones":
+        print("saludar,sumar,iniciar web,ver la hora,salir,ver historial")
+        print("estas acciones solo se escribien la palabra al momento que el programa  te diga  = ¿que accion quieres realizar? y esta se ejecutara al momento que la escribas")
+    elif pregunta == "saludar":
+        nombre = input("¿cual es tu nombre?: ")
+        print("hola ", nombre, "bienvenido a mi programa")                                       
+    elif pregunta == "sumar":
+        numero1 = int(input("dime un numero: "))
+        numero2 = int(input("dime otro numero: "))
+        resultado = numero1 + numero2
+        print("el resultado de la suma es: ", resultado)   
+    elif pregunta == "iniciar web":
+        @app.route("/")
+        def inicio():
+            return """
+            <h1>Bienvenido a mi sitio web</h1>
+            <p>Este es un sitio web de prueba</p>
+            <a href="/saludo">Saludar</a><br>
+             <a href="/informacion web">Información de la web</a><br>
+                  <a href="/almacen_de_datos">entrar al almacen de datos o conceptos pequeños</a><br>
+            <input type="text" placeholder="Escribe tu nombre"></input>
+            <button>Enviar</button>
+           
+                                                                                                       
+            """
+        @app.route("/almacen_de_datos")
+        def almacen_de_datos():
+            return """
+            <h1>Almacen de Datos</h1>
+            <p>Esta es una página para almacenar datos.</p>
+            <a href="/">Regresar a inicio</a><br>
+                 <a href="/que_es_python">¿que es python?</a><br>
+            """
+        @app.route("/que_es_python")
+        def que_es_python():
+            return """
+            <h1>¿que es python?</h1>
+            <p>Python es un lenguaje de programación de alto nivel, interpretado, multipropósito y de código abierto..</p>
+            <a href="/">Regresar a inicio</a><br>
+            <a href="/almacen_de_datos">Regresar a almacen de datos</a><br>
+      
+
+
+            """ 
+        @app.route("/saludo")
+        def saludo():
+            nombre = request.args.get("nombre")
+            return """<h1>Hola usuario espero que disfrutes la web!</h1>
+                <a href="/">Regresar a inicio</a><br>
+            """
+            
+        @app.route("/informacion web")
+        def informacion_web():
+            return """
+            <h1>Información de la web</h1>
+            <p>Esta es una web de prueba creada con Flask.</p>
+            <p>la cual solo sirve para mostrar información de esta misma pagina web .</p>
+            <a href="/">Regresar a inicio</a><br>
+             <a href="/creador_de_la_web">informacion del creador de la web</a><br>
+         
+
+            """
+        @app.route("/creador_de_la_web")
+        def ver_codigo_web():
+            return """
+            <h1>creador de la web</h1>
+            <p>El creador de esta pagina web es Aldrin Nicolas Salazar Avilas. creada solo para un bruebita.</p>
+            <a href="/">Regresar a inicio</a><br>
+            <a>              <a>
+            
+            """
+
+            
+        
+        pregunta = input("¿quieres iniciar la pagina web? (si/no): ")
+        if pregunta.lower() == "si":
+       
+            print("iniciando pagina web...") 
+            app.run()
+        else:
+            print("no se iniciara la pagina web")
+       
+    
+    elif pregunta == "ver la hora":
+        print(time.ctime())    
+    elif pregunta == "salir":
+        print("gracias por usar mi programa, hasta luego")
+        break   
+    elif pregunta == "ver historial":
+        
+        for i,historial in enumerate(historial):
+            print(f"{i+1}. {historial}")
+        print
+        if historial == []:
+            print("no hay historial")

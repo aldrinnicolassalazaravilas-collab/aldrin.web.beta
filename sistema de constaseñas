@@ -1,0 +1,12 @@
+
+nombres_guardados = input("ingresa tu nombre de usuario: ")
+if nombres_guardados == "Aldrin 777" or nombres_guardados == "maicol 67" or nombres_guardados == "maria 1234":
+        print("bienvenido ")
+else:
+        print("no encontramos tu cuenta")
+        no_tengo_cuenta = input("¿quieres crear una cuenta? (si/no): ")
+        if no_tengo_cuenta == "si":
+                nuevo_usuario = input("ingresa tu nuevo nombre de usuario: ")
+                print("cuenta creada exitosamente, bienvenido ", nuevo_usuario)
+        else:
+         print("gracias por visitarnos, hasta luego")
