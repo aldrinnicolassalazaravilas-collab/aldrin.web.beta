@@ -113,7 +113,7 @@ def saludo():
 
     """
     
-@app.route("/informacion web")
+@app.route("/informacion_web")
 def informacion_web():
     return """
     <h1>Información de la web</h1>
@@ -150,7 +150,7 @@ def apps():
   <a href="https://chatgpt.com" target="_blank">
         
           
-          <h45>Entrar a ChatGPT</h45>
+          <h4>Entrar a ChatGPT</h4>
           """
 historial = []
 
@@ -370,16 +370,15 @@ def inicio():
 </body>
 </html>
     
-   <style>
-      body{
-        font-size: 20px;
-        background-color:#FFD966;
-      }
-
-    
-    ""
-   
-    """
+  
+...
+<style>
+body{
+    font-size: 20px;
+    background-color:#FFD966;
+}
+</style>
+"""
 
 @app.route("/reloj")
 def reloj():
