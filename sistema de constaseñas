@@ -1,16 +1,21 @@
-while True:
- nombres_guardados = input("ingresa tu nombre de usuario: ")
- if nombres_guardados == "Aldrin 777" or nombres_guardados == "maicol 67" or nombres_guardados == "maria 1234":
-        print("bienvenido ")
- else:
-        print("no encontramos tu cuenta")
-        no_tengo_cuenta = input("¿quieres crear una cuenta? (si/no): ")
-        if no_tengo_cuenta == "si":
-                nuevo_usuario = input("ingresa tu nuevo nombre de usuario: ")
-                print("cuenta creada exitosamente, bienvenido ", nuevo_usuario)
-                nuevo_usuario.append(nombres_guardados)
+usuarios = ["Aldrin 777", "maicol 67", "maria 1234"]
 
-                
-            
+while True:
+    nombre = input("Ingresa tu nombre de usuario: ")
+
+    if nombre in usuarios:
+        print("Bienvenido", nombre)
+
+    else:
+        print("No encontramos tu cuenta")
+
+        respuesta = input("¿Quieres crear una cuenta? (si/no): ")
+
+        if respuesta == "si":
+            nuevo_usuario = input("Ingresa tu nuevo nombre de usuario: ")
+            usuarios.append(nuevo_usuario)
+            print("Cuenta creada exitosamente, bienvenido", nuevo_usuario)
+
         else:
-         print("gracias por visitarnos, hasta luego")
+            print("Gracias por visitarnos, hasta luego")
+            
