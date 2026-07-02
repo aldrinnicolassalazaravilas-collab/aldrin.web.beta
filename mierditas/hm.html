@@ -1,0 +1,736 @@
+import React, { useState, useEffect } from 'react';
+import { Dna, RefreshCw, CheckCircle, XCircle, BookOpen, PenTool, ArrowRight, Sparkles, Wand2, Loader2, MessageCircle } from 'lucide-react';
+
+const apiKey = ""; // La clave de la API se inyecta automáticamente en el entorno de ejecución
+
+const PunnettLab = () => {
+  const [activeTab, setActiveTab] = useState('practice');
+
+  // --- ESTADO PARA PRÁCTICA LIBRE ---
+  const [p1, setP1] = useState('Aa');
+  const [p2, setP2] = useState('Aa');
+  const [grid, setGrid] = useState(['', '', '', '']);
+  const [feedback, setFeedback] = useState(null);
+  
+  // Estado para la explicación de la IA en práctica libre
+  const [aiExplanation, setAiExplanation] = useState(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+
+  // --- ESTADO PARA GENERADOR DE EJERCICIOS CLÁSICO ---
+  const [exercise, setExercise] = useState(null);
+  const [showSolution, setShowSolution] = useState(false);
+
+  // --- ESTADO PARA GENERADOR IA MÁGICO ---
+  const [aiTheme, setAiTheme] = useState("Dragones que escupen fuego o hielo");
+  const [aiExercise, setAiExercise] = useState(null);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [showAiSolution, setShowAiSolution] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  // --- ESTADO PARA INTERACTIVIDAD DE EJERCICIOS ---
+  const [exInteractive, setExInteractive] = useState({ p1: '', p2: '', grid: ['', '', '', ''], feedback: null });
+
+  const resetExInteractive = () => setExInteractive({ p1: '', p2: '', grid: ['', '', '', ''], feedback: null });
+
+  const verifyExercise = (correctP1, correctP2) => {
+    if (exInteractive.p1.length !== 2 || exInteractive.p2.length !== 2) {
+      setExInteractive(prev => ({ ...prev, feedback: { type: 'error', text: 'Los padres deben tener exactamente 2 letras.' } }));
+      return false;
+    }
+    const uP1 = sortAlleles(exInteractive.p1);
+    const uP2 = sortAlleles(exInteractive.p2);
+    const cP1 = sortAlleles(correctP1);
+    const cP2 = sortAlleles(correctP2);
+
+    const parentsCorrect = (uP1 === cP1 && uP2 === cP2) || (uP1 === cP2 && uP2 === cP1);
+
+    if (!parentsCorrect) {
+      setExInteractive(prev => ({ ...prev, feedback: { type: 'error', text: 'Los genotipos de los padres no son correctos según la historia. Lee bien quién es dominante y recesivo.' } }));
+      return false;
+    }
+
+    const expected = [
+      sortAlleles(exInteractive.p1[0] + exInteractive.p2[0]),
+      sortAlleles(exInteractive.p1[1] + exInteractive.p2[0]),
+      sortAlleles(exInteractive.p1[0] + exInteractive.p2[1]),
+      sortAlleles(exInteractive.p1[1] + exInteractive.p2[1])
+    ];
+
+    let isCorrect = true;
+    for (let i = 0; i < 4; i++) {
+      if (sortAlleles(exInteractive.grid[i]) !== expected[i]) {
+        isCorrect = false;
+        break;
+      }
+    }
+
+    if (isCorrect) {
+      setExInteractive(prev => ({ ...prev, feedback: { type: 'success', text: '¡Excelente! Cuadro de Punnett resuelto correctamente.' } }));
+      return true;
+    } else {
+      setExInteractive(prev => ({ ...prev, feedback: { type: 'error', text: 'El cuadro de Punnett tiene errores. Revisa las intersecciones.' } }));
+      return false;
+    }
+  };
+
+  // Base de datos de rasgos para el generador clásico
+  const traits = [
+    { name: 'color de la flor', dom: 'Amarillo', rec: 'Café', letter: 'A' },
+    { name: 'tamaño del tallo', dom: 'Largo', rec: 'Corto', letter: 'T' },
+    { name: 'tipo de raíces', dom: 'Abundantes', rec: 'Escasas', letter: 'R' },
+    { name: 'textura de la semilla', dom: 'Lisa', rec: 'Rugosa', letter: 'B' }
+  ];
+
+  const crossTypes = [
+    { name: 'Homocigoto Dominante x Homocigoto Recesivo', g1: 'DD', g2: 'rr' },
+    { name: 'Heterocigoto x Heterocigoto (Segunda Ley)', g1: 'Dr', g2: 'Dr' },
+    { name: 'Heterocigoto x Homocigoto Recesivo', g1: 'Dr', g2: 'rr' },
+    { name: 'Heterocigoto x Homocigoto Dominante', g1: 'Dr', g2: 'DD' }
+  ];
+
+  // Helper: Ordenar alelos (ej. aA -> Aa)
+  const sortAlleles = (str) => {
+    return str.split('').sort((a, b) => {
+      if (a.toLowerCase() === b.toLowerCase()) {
+        return a < b ? -1 : 1; // Mayúscula primero
+      }
+      return 0;
+    }).join('');
+  };
+
+  // --- FUNCIÓN DE RETROCESO EXPONENCIAL PARA LA API ---
+  const fetchWithBackoff = async (fn, retries = 5) => {
+    const delays = [1000, 2000, 4000, 8000, 16000];
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        if (i === retries - 1) throw err;
+        await new Promise(r => setTimeout(r, delays[i]));
+      }
+    }
+  };
+
+  // --- LÓGICA PRÁCTICA LIBRE ---
+  const handleGridChange = (index, value) => {
+    const newGrid = [...grid];
+    newGrid[index] = value.slice(0, 2);
+    setGrid(newGrid);
+    setFeedback(null);
+    setAiExplanation(null); // Limpiar explicación previa
+  };
+
+  const checkPractice = () => {
+    if (p1.length !== 2 || p2.length !== 2) {
+      setFeedback({ type: 'error', text: 'Los padres deben tener exactamente 2 alelos (ej. Aa).' });
+      return;
+    }
+
+    const expected = [
+      sortAlleles(p1[0] + p2[0]),
+      sortAlleles(p1[1] + p2[0]),
+      sortAlleles(p1[0] + p2[1]),
+      sortAlleles(p1[1] + p2[1])
+    ];
+
+    let isCorrect = true;
+    for (let i = 0; i < 4; i++) {
+      if (sortAlleles(grid[i]) !== expected[i]) {
+        isCorrect = false;
+        break;
+      }
+    }
+
+    if (isCorrect) {
+      setFeedback({ type: 'success', text: '¡Excelente! Has completado el cuadro de Punnett correctamente.' });
+    } else {
+      setFeedback({ type: 'error', text: 'Hay algún error. Revisa la combinación de las filas y columnas y recuerda poner la mayúscula primero.' });
+    }
+  };
+
+  const resetPractice = () => {
+    setGrid(['', '', '', '']);
+    setFeedback(null);
+    setAiExplanation(null);
+  };
+
+  // LLM: Pedir explicación de un cruce
+  const explainCrossWithAI = async () => {
+    setIsExplaining(true);
+    setAiExplanation(null);
+    try {
+      const promptText = `Actúa como un profesor de biología súper amable. Acabo de completar un cuadro de Punnett cruzando los genotipos ${p1} y ${p2}. Explícame en un párrafo corto y motivador cuáles son las proporciones genotípicas resultantes y qué significa esto según las leyes de Mendel.`;
+      
+      const result = await fetchWithBackoff(async () => {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+          })
+        });
+        if (!response.ok) throw new Error("API call failed");
+        return response.json();
+      });
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      setAiExplanation(text);
+    } catch (e) {
+      setAiExplanation("Uy, la conexión con mi cerebro de IA falló un poco. Pero tu cuadro está perfecto. ¡Sigue así!");
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  // --- LÓGICA GENERADOR CLÁSICO ---
+  const generateExercise = () => {
+    const randomTrait = traits[Math.floor(Math.random() * traits.length)];
+    const randomCross = crossTypes[Math.floor(Math.random() * crossTypes.length)];
+    
+    const D = randomTrait.letter.toUpperCase();
+    const r = randomTrait.letter.toLowerCase();
+
+    const p1Genotype = randomCross.g1.replace(/D/g, D).replace(/r/g, r);
+    const p2Genotype = randomCross.g2.replace(/D/g, D).replace(/r/g, r);
+
+    const getDesc = (geno) => {
+      if (geno === D+D) return `homocigota dominante (${randomTrait.dom})`;
+      if (geno === r+r) return `homocigota recesiva (${randomTrait.rec})`;
+      return `heterocigota (${randomTrait.dom})`;
+    };
+
+    const exText = `En una especie de planta, el ${randomTrait.name} sigue las leyes de Mendel. El alelo dominante '${D}' determina el fenotipo ${randomTrait.dom}, mientras que el recesivo '${r}' determina el fenotipo ${randomTrait.rec}. Se cruza una planta ${getDesc(p1Genotype)} con una planta ${getDesc(p2Genotype)}. Elabora el cuadro de Punnett y determina las proporciones resultantes.`;
+
+    const exp = [
+      sortAlleles(p1Genotype[0] + p2Genotype[0]),
+      sortAlleles(p1Genotype[1] + p2Genotype[0]),
+      sortAlleles(p1Genotype[0] + p2Genotype[1]),
+      sortAlleles(p1Genotype[1] + p2Genotype[1])
+    ];
+
+    const genoCounts = {};
+    exp.forEach(g => genoCounts[g] = (genoCounts[g] || 0) + 1);
+    
+    const phenoCounts = {};
+    exp.forEach(g => {
+      const isDom = g.includes(D);
+      const pheno = isDom ? randomTrait.dom : randomTrait.rec;
+      phenoCounts[pheno] = (phenoCounts[pheno] || 0) + 1;
+    });
+
+    setExercise({
+      text: exText,
+      p1: p1Genotype,
+      p2: p2Genotype,
+      grid: exp,
+      genoRatios: Object.entries(genoCounts).map(([k, v]) => `${(v/4)*100}% ${k}`).join(', '),
+      phenoRatios: Object.entries(phenoCounts).map(([k, v]) => `${(v/4)*100}% ${k}`).join(', ')
+    });
+    setShowSolution(false);
+    resetExInteractive();
+  };
+
+  useEffect(() => {
+    generateExercise();
+  }, []);
+
+  // --- LÓGICA GENERADOR IA ---
+  const generateAIProblem = async () => {
+    if (!aiTheme.trim()) return;
+    
+    setIsGeneratingAI(true);
+    setAiError(null);
+    setShowAiSolution(false);
+    
+    try {
+      const result = await fetchWithBackoff(async () => {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ 
+              parts: [{ 
+                text: `Genera un divertido problema de genética mendeliana (un solo rasgo) para estudiantes de biología basado en este tema: "${aiTheme}". Inventa un rasgo dominante y recesivo acorde al tema. Genera el cruce entre dos individuos (tú decide si son homocigotos o heterocigotos).` 
+              }] 
+            }],
+            generationConfig: { 
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  historia: { type: "STRING", description: "El texto descriptivo del problema a resolver." },
+                  p1: { type: "STRING", description: "Genotipo del padre 1 (2 letras, ej: Aa)" },
+                  p2: { type: "STRING", description: "Genotipo del padre 2 (2 letras, ej: aa)" },
+                  grid: { 
+                    type: "ARRAY", 
+                    items: { type: "STRING" },
+                    description: "Array de exactamente 4 strings con el resultado del cuadro de Punnett. Deben estar ordenados alfabéticamente (ej: Aa, no aA)"
+                  },
+                  fenotipos: { type: "STRING", description: "Proporciones fenotípicas resultantes" },
+                  genotipos: { type: "STRING", description: "Proporciones genotípicas resultantes" },
+                  explicacion: { type: "STRING", description: "Explicación del profesor sobre por qué dio este resultado." }
+                },
+                required: ["historia", "p1", "p2", "grid", "fenotipos", "genotipos", "explicacion"]
+              }
+            }
+          })
+        });
+        if (!response.ok) throw new Error("API call failed");
+        return response.json();
+      });
+
+      const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      const data = JSON.parse(textResponse);
+      setAiExercise(data);
+      resetExInteractive();
+
+    } catch (err) {
+      console.error(err);
+      setAiError("Oops, los duendes de la IA se enredaron con el ADN. Intenta con otro tema o haz clic de nuevo.");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+          <div className="bg-emerald-100 p-4 rounded-full text-emerald-600 shadow-inner">
+            <Dna size={40} />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-indigo-600">
+              Laboratorio de Genética
+            </h1>
+            <p className="text-slate-500 text-lg">Cuadros de Punnett potenciados con Inteligencia Artificial</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6">
+          <button 
+            onClick={() => { setActiveTab('practice'); resetExInteractive(); }}
+            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-bold transition-all ${activeTab === 'practice' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+          >
+            <PenTool size={18} /> Práctica Libre
+          </button>
+          <button 
+            onClick={() => { setActiveTab('generator'); resetExInteractive(); }}
+            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-bold transition-all ${activeTab === 'generator' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+          >
+            <BookOpen size={18} /> Clásicos
+          </button>
+          <button 
+            onClick={() => { setActiveTab('ai-generator'); resetExInteractive(); }}
+            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-bold transition-all ${activeTab === 'ai-generator' ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-300' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+          >
+            <Sparkles size={18} className={activeTab === 'ai-generator' ? 'text-yellow-300' : 'text-purple-500'} /> 
+            Retos Mágicos IA
+          </button>
+        </div>
+
+        {/* CONTENIDO: PRÁCTICA LIBRE */}
+        {activeTab === 'practice' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 md:p-8 animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-emerald-800">
+              <PenTool size={26} /> Rellena el Cuadro
+            </h2>
+            <p className="text-slate-600 mb-8 text-lg">Define los genotipos de los padres y completa las casillas interiores. Usa mayúscula para el dominante y minúscula para el recesivo.</p>
+
+            <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
+              
+              {/* Inputs Padres */}
+              <div className="flex flex-col gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner w-full md:w-auto">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Genotipo Padre 1 (Superior):</label>
+                  <input 
+                    type="text" 
+                    value={p1} 
+                    onChange={(e) => { setP1(e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2)); resetPractice(); }}
+                    className="w-24 text-center text-2xl p-2 border-2 border-emerald-300 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-mono shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Genotipo Padre 2 (Izquierda):</label>
+                  <input 
+                    type="text" 
+                    value={p2} 
+                    onChange={(e) => { setP2(e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2)); resetPractice(); }}
+                    className="w-24 text-center text-2xl p-2 border-2 border-emerald-300 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 font-mono shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* El Cuadro de Punnett */}
+              <div className="relative p-6 bg-white rounded-3xl border-2 border-slate-100 shadow-xl">
+                <div className="absolute top-2 left-24 right-4 flex justify-around font-mono text-3xl font-extrabold text-emerald-600">
+                  <div className="w-20 text-center">{p1[0] || '?'}</div>
+                  <div className="w-20 text-center">{p1[1] || '?'}</div>
+                </div>
+                
+                <div className="absolute left-2 top-20 bottom-4 flex flex-col justify-around font-mono text-3xl font-extrabold text-emerald-600">
+                  <div className="h-20 flex items-center justify-center">{p2[0] || '?'}</div>
+                  <div className="h-20 flex items-center justify-center">{p2[1] || '?'}</div>
+                </div>
+
+                <div className="ml-16 mt-14 grid grid-cols-2 grid-rows-2 gap-3 bg-slate-800 p-3 rounded-2xl">
+                  {grid.map((cell, idx) => (
+                    <input 
+                      key={idx}
+                      type="text"
+                      value={cell}
+                      onChange={(e) => handleGridChange(idx, e.target.value.replace(/[^A-Za-z]/g, ''))}
+                      className="w-24 h-24 text-center text-4xl font-mono border-none rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-400 bg-slate-50 transition-all hover:bg-emerald-50"
+                      placeholder="?"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Controles y Feedback */}
+            <div className="mt-12 flex flex-col items-center gap-4">
+              <div className="flex flex-wrap justify-center gap-4">
+                <button 
+                  onClick={checkPractice}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-bold text-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                >
+                  <CheckCircle size={22} /> Verificar Cuadro
+                </button>
+                <button 
+                  onClick={resetPractice}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-full font-bold text-lg transition-colors flex items-center gap-2"
+                >
+                  <RefreshCw size={22} /> Limpiar
+                </button>
+              </div>
+
+              {feedback && (
+                <div className={`p-4 rounded-xl mt-4 w-full md:w-3/4 flex flex-col items-center gap-4 ${feedback.type === 'success' ? 'bg-emerald-50 border-2 border-emerald-200' : 'bg-red-50 border-2 border-red-200'}`}>
+                  <div className="flex items-center gap-3">
+                    {feedback.type === 'success' ? <CheckCircle size={28} className="text-emerald-600" /> : <XCircle size={28} className="text-red-600" />}
+                    <span className={`font-bold text-lg ${feedback.type === 'success' ? 'text-emerald-800' : 'text-red-800'}`}>{feedback.text}</span>
+                  </div>
+                  
+                  {feedback.type === 'success' && (
+                    <button 
+                      onClick={explainCrossWithAI}
+                      disabled={isExplaining}
+                      className="mt-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2 shadow-md hover:shadow-lg disabled:opacity-70"
+                    >
+                      {isExplaining ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} className="text-yellow-300"/>}
+                      ✨ Explicar este cruce con IA
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Caja de explicación IA */}
+              {aiExplanation && (
+                <div className="w-full md:w-3/4 bg-purple-50 border-2 border-purple-200 p-6 rounded-2xl shadow-inner mt-4 animate-fade-in relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 opacity-10">
+                    <Sparkles size={100} />
+                  </div>
+                  <h3 className="font-extrabold text-purple-800 mb-2 flex items-center gap-2">
+                    <MessageCircle size={20}/> Análisis del Tutor IA:
+                  </h3>
+                  <p className="text-purple-900 leading-relaxed font-medium">
+                    {aiExplanation}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CONTENIDO: GENERADOR CLÁSICO */}
+        {activeTab === 'generator' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 md:p-8 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+              <h2 className="text-2xl font-bold flex items-center gap-2 text-indigo-800">
+                <BookOpen size={26} /> Problemas Clásicos
+              </h2>
+              <button 
+                onClick={generateExercise}
+                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-5 py-2.5 rounded-full font-bold flex items-center gap-2 transition-colors border border-indigo-200"
+              >
+                <RefreshCw size={20} /> Generar Guisantes/Flores
+              </button>
+            </div>
+
+            {exercise && (
+              <div className="space-y-8">
+                <div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-xl text-lg text-slate-800 leading-relaxed shadow-sm">
+                  {exercise.text}
+                </div>
+
+                {!showSolution ? (
+                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 md:p-8 shadow-inner">
+                    <h3 className="text-xl font-bold text-indigo-800 mb-6 text-center">¡Resuelve el cuadro interactivo!</h3>
+                    
+                    <div className="flex flex-col md:flex-row gap-8 items-center justify-center mb-8">
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-1">Padre 1:</label>
+                          <input type="text" value={exInteractive.p1} onChange={(e) => setExInteractive(prev => ({...prev, p1: e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2), feedback: null}))} className="w-24 text-center text-xl p-2 border-2 border-indigo-300 rounded-xl focus:outline-none focus:border-indigo-500 font-mono bg-white" placeholder="Ej: Aa" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-1">Padre 2:</label>
+                          <input type="text" value={exInteractive.p2} onChange={(e) => setExInteractive(prev => ({...prev, p2: e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2), feedback: null}))} className="w-24 text-center text-xl p-2 border-2 border-indigo-300 rounded-xl focus:outline-none focus:border-indigo-500 font-mono bg-white" placeholder="Ej: aa" />
+                        </div>
+                      </div>
+
+                      <div className="relative p-4 bg-white rounded-2xl border-2 border-indigo-100 shadow-md">
+                        <div className="absolute top-1 left-20 right-2 flex justify-around font-mono text-2xl font-bold text-indigo-400">
+                          <div className="w-16 text-center">{exInteractive.p1[0] || '?'}</div>
+                          <div className="w-16 text-center">{exInteractive.p1[1] || '?'}</div>
+                        </div>
+                        <div className="absolute left-1 top-16 bottom-2 flex flex-col justify-around font-mono text-2xl font-bold text-indigo-400">
+                          <div className="h-16 flex items-center justify-center">{exInteractive.p2[0] || '?'}</div>
+                          <div className="h-16 flex items-center justify-center">{exInteractive.p2[1] || '?'}</div>
+                        </div>
+                        <div className="ml-14 mt-12 grid grid-cols-2 grid-rows-2 gap-2 bg-indigo-900 p-2 rounded-xl">
+                          {exInteractive.grid.map((cell, idx) => (
+                            <input key={idx} type="text" value={cell} onChange={(e) => {
+                              const newGrid = [...exInteractive.grid];
+                              newGrid[idx] = e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2);
+                              setExInteractive(prev => ({ ...prev, grid: newGrid, feedback: null }));
+                            }} className="w-16 h-16 text-center text-2xl font-mono border-none rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-400" placeholder="?" />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4">
+                      <button onClick={() => { if(verifyExercise(exercise.p1, exercise.p2)) setShowSolution(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-indigo-300 hover:-translate-y-1 flex items-center gap-2">
+                        <CheckCircle size={20}/> Verificar y Ver Explicación
+                      </button>
+                      
+                      {exInteractive.feedback && (
+                        <div className={`p-4 rounded-xl w-full md:w-3/4 flex items-center gap-3 ${exInteractive.feedback.type === 'success' ? 'bg-green-50 text-green-800 border-2 border-green-200' : 'bg-red-50 text-red-800 border-2 border-red-200'}`}>
+                          {exInteractive.feedback.type === 'success' ? <CheckCircle size={24} className="text-green-600" /> : <XCircle size={24} className="text-red-600" />}
+                          <span className="font-bold">{exInteractive.feedback.text}</span>
+                        </div>
+                      )}
+                      
+                      <button onClick={() => setShowSolution(true)} className="text-indigo-500 hover:text-indigo-700 font-medium underline mt-2 text-sm">
+                        Me rindo, mostrar solución
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white border-2 border-slate-100 shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in">
+                    <h3 className="text-xl font-extrabold text-slate-800 mb-8 flex items-center gap-2">
+                      <ArrowRight className="text-indigo-500"/> Solución Detallada
+                    </h3>
+
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-12">
+                      {/* Cuadro Solución */}
+                      <div className="relative p-5 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div className="absolute top-1 left-16 right-0 flex justify-around font-mono text-2xl font-bold text-indigo-700">
+                          <div className="w-16 text-center">{exercise.p1[0]}</div>
+                          <div className="w-16 text-center">{exercise.p1[1]}</div>
+                        </div>
+                        <div className="absolute left-1 top-12 bottom-0 flex flex-col justify-around font-mono text-2xl font-bold text-indigo-700">
+                          <div className="h-16 flex items-center justify-center">{exercise.p2[0]}</div>
+                          <div className="h-16 flex items-center justify-center">{exercise.p2[1]}</div>
+                        </div>
+                        <div className="ml-14 mt-10 grid grid-cols-2 grid-rows-2 gap-2 bg-slate-300 p-2 rounded-xl">
+                          {exercise.grid.map((cell, idx) => (
+                            <div key={idx} className="w-16 h-16 bg-white flex items-center justify-center text-2xl font-bold font-mono text-slate-800 rounded-lg shadow-sm">
+                              {cell}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Proporciones */}
+                      <div className="flex-1 w-full space-y-4">
+                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors">
+                          <h4 className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest mb-2">Genotipos Resultantes:</h4>
+                          <p className="text-2xl font-mono text-slate-800 font-bold">{exercise.genoRatios}</p>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors">
+                          <h4 className="text-xs font-extrabold text-indigo-500 uppercase tracking-widest mb-2">Fenotipos Resultantes:</h4>
+                          <p className="text-2xl font-medium text-slate-800">{exercise.phenoRatios}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CONTENIDO: GENERADOR IA MÁGICO */}
+        {activeTab === 'ai-generator' && (
+          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl shadow-xl border border-purple-200 p-6 md:p-8 animate-fade-in relative overflow-hidden">
+            
+            {/* Decals de fondo */}
+            <div className="absolute top-0 right-0 -mr-10 -mt-10 opacity-20 pointer-events-none">
+              <Wand2 size={150} className="text-purple-500" />
+            </div>
+
+            <div className="relative z-10">
+              <h2 className="text-2xl font-extrabold mb-2 flex items-center gap-2 text-purple-800">
+                <Sparkles size={26} className="text-yellow-500" /> Generador Mágico IA
+              </h2>
+              <p className="text-purple-700 mb-8 font-medium">Inventa cualquier tema y la Inteligencia Artificial creará un problema de genética único y divertido para ti.</p>
+
+              <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <input 
+                  type="text" 
+                  value={aiTheme}
+                  onChange={(e) => setAiTheme(e.target.value)}
+                  placeholder="Ej: Dinosaurios espaciales, Superhéroes, Gatos mágicos..."
+                  className="flex-1 p-4 rounded-xl border-2 border-purple-200 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-lg shadow-sm bg-white/80 backdrop-blur-sm font-medium text-purple-900"
+                />
+                <button 
+                  onClick={generateAIProblem}
+                  disabled={isGeneratingAI || !aiTheme.trim()}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl font-extrabold text-lg transition-all shadow-lg hover:shadow-purple-400 hover:-translate-y-1 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none flex items-center justify-center min-w-[200px]"
+                >
+                  {isGeneratingAI ? (
+                    <><Loader2 className="animate-spin mr-2" size={24} /> Creando...</>
+                  ) : (
+                    <>✨ Generar Reto</>
+                  )}
+                </button>
+              </div>
+
+              {aiError && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg text-red-700 font-medium mb-8">
+                  {aiError}
+                </div>
+              )}
+
+              {aiExercise && !isGeneratingAI && (
+                <div className="space-y-8 mt-10">
+                  <div className="bg-white/90 backdrop-blur-md border border-purple-100 p-8 rounded-2xl text-lg text-slate-800 leading-relaxed shadow-xl relative">
+                    <div className="absolute -top-4 -left-4 bg-yellow-400 text-yellow-900 font-black text-xs uppercase tracking-widest py-1.5 px-3 rounded-full shadow-md">
+                      Historia Creada por IA
+                    </div>
+                    {aiExercise.historia}
+                  </div>
+
+                  {!showAiSolution ? (
+                    <div className="bg-purple-50/80 backdrop-blur-sm rounded-3xl border-2 border-purple-200 p-6 md:p-8 shadow-inner mt-8">
+                      <h3 className="text-xl font-bold text-purple-800 mb-6 text-center">¡Resuelve el reto mágico!</h3>
+                      
+                      <div className="flex flex-col md:flex-row gap-8 items-center justify-center mb-8">
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <label className="block text-sm font-bold text-purple-800 mb-1">Padre 1:</label>
+                            <input type="text" value={exInteractive.p1} onChange={(e) => setExInteractive(prev => ({...prev, p1: e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2), feedback: null}))} className="w-24 text-center text-xl p-2 border-2 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 font-mono shadow-sm bg-white" placeholder="Ej: Aa" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-purple-800 mb-1">Padre 2:</label>
+                            <input type="text" value={exInteractive.p2} onChange={(e) => setExInteractive(prev => ({...prev, p2: e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2), feedback: null}))} className="w-24 text-center text-xl p-2 border-2 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 font-mono shadow-sm bg-white" placeholder="Ej: aa" />
+                          </div>
+                        </div>
+
+                        <div className="relative p-4 bg-white rounded-2xl border-2 border-purple-100 shadow-md">
+                          <div className="absolute top-1 left-20 right-2 flex justify-around font-mono text-2xl font-bold text-purple-400">
+                            <div className="w-16 text-center">{exInteractive.p1[0] || '?'}</div>
+                            <div className="w-16 text-center">{exInteractive.p1[1] || '?'}</div>
+                          </div>
+                          <div className="absolute left-1 top-16 bottom-2 flex flex-col justify-around font-mono text-2xl font-bold text-purple-400">
+                            <div className="h-16 flex items-center justify-center">{exInteractive.p2[0] || '?'}</div>
+                            <div className="h-16 flex items-center justify-center">{exInteractive.p2[1] || '?'}</div>
+                          </div>
+                          <div className="ml-14 mt-12 grid grid-cols-2 grid-rows-2 gap-2 bg-purple-900 p-2 rounded-xl">
+                            {exInteractive.grid.map((cell, idx) => (
+                              <input key={idx} type="text" value={cell} onChange={(e) => {
+                                const newGrid = [...exInteractive.grid];
+                                newGrid[idx] = e.target.value.replace(/[^A-Za-z]/g, '').slice(0, 2);
+                                setExInteractive(prev => ({ ...prev, grid: newGrid, feedback: null }));
+                              }} className="w-16 h-16 text-center text-2xl font-mono border-none rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-400" placeholder="?" />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-4">
+                        <button onClick={() => { if(verifyExercise(aiExercise.p1, aiExercise.p2)) setShowAiSolution(true); }} className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-purple-400 hover:-translate-y-1 flex items-center gap-2">
+                          <CheckCircle size={20}/> Verificar y Ver Explicación IA
+                        </button>
+                        
+                        {exInteractive.feedback && (
+                          <div className={`p-4 rounded-xl w-full md:w-3/4 flex items-center gap-3 ${exInteractive.feedback.type === 'success' ? 'bg-green-50 text-green-800 border-2 border-green-200' : 'bg-red-50 text-red-800 border-2 border-red-200'}`}>
+                            {exInteractive.feedback.type === 'success' ? <CheckCircle size={24} className="text-green-600" /> : <XCircle size={24} className="text-red-600" />}
+                            <span className="font-bold">{exInteractive.feedback.text}</span>
+                          </div>
+                        )}
+                        
+                        <button onClick={() => setShowAiSolution(true)} className="text-purple-500 hover:text-purple-700 font-medium underline mt-2 text-sm">
+                          Me rindo, mostrar solución mágica
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-200 shadow-2xl rounded-3xl p-6 md:p-10 animate-fade-in relative mt-8">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-sm uppercase tracking-widest py-2 px-6 rounded-full shadow-lg">
+                        Solución del Tutor IA
+                      </div>
+
+                      <div className="flex flex-col md:flex-row items-center md:items-start gap-12 mt-6">
+                        {/* Cuadro Solución IA */}
+                        <div className="relative p-6 bg-purple-50 rounded-3xl border border-purple-100 shadow-inner">
+                          <div className="absolute top-2 left-20 right-0 flex justify-around font-mono text-3xl font-black text-purple-700">
+                            <div className="w-16 text-center">{aiExercise.p1[0]}</div>
+                            <div className="w-16 text-center">{aiExercise.p1[1]}</div>
+                          </div>
+                          <div className="absolute left-2 top-16 bottom-0 flex flex-col justify-around font-mono text-3xl font-black text-purple-700">
+                            <div className="h-16 flex items-center justify-center">{aiExercise.p2[0]}</div>
+                            <div className="h-16 flex items-center justify-center">{aiExercise.p2[1]}</div>
+                          </div>
+                          <div className="ml-16 mt-12 grid grid-cols-2 grid-rows-2 gap-3 bg-indigo-900 p-3 rounded-2xl">
+                            {aiExercise.grid.map((cell, idx) => (
+                              <div key={idx} className="w-20 h-20 bg-white flex items-center justify-center text-3xl font-bold font-mono text-indigo-900 rounded-xl shadow">
+                                {cell}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Proporciones e info IA */}
+                        <div className="flex-1 w-full space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-purple-50 p-5 rounded-2xl border border-purple-100">
+                              <h4 className="text-xs font-black text-purple-500 uppercase tracking-widest mb-1">Genotipos:</h4>
+                              <p className="text-xl font-mono text-purple-900 font-bold">{aiExercise.genotipos}</p>
+                            </div>
+                            <div className="bg-purple-50 p-5 rounded-2xl border border-purple-100">
+                              <h4 className="text-xs font-black text-purple-500 uppercase tracking-widest mb-1">Fenotipos:</h4>
+                              <p className="text-xl font-medium text-purple-900">{aiExercise.fenotipos}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-r-2xl mt-4">
+                            <h4 className="text-sm font-black text-yellow-700 mb-2 flex items-center gap-2">
+                              <MessageCircle size={18}/> Explicación del Profesor IA:
+                            </h4>
+                            <p className="text-yellow-900 font-medium italic">
+                              "{aiExercise.explicacion}"
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default PunnettLab;

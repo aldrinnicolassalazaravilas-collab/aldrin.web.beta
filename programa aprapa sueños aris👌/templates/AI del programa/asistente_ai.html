@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Programa de aprendizaje de informática</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Poppins",sans-serif;
+}
+
+body{
+    background:#eef2f7;
+    padding:30px;
+}
+
+header{
+    background:linear-gradient(135deg,#0055ff,#00b7ff);
+    color:white;
+    text-align:center;
+    padding:60px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    margin-bottom:25px;
+}
+
+header h1{
+    font-size:40px;
+}
+
+header p{
+    margin-top:10px;
+    opacity:.9;
+}
+
+section{
+    background:white;
+    margin:20px auto;
+    padding:30px;
+    max-width:900px;
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+section h1{
+    color:#0055ff;
+    margin-bottom:15px;
+}
+
+button{
+    background:linear-gradient(135deg,#00c6ff,#0072ff);
+    color:white;
+    border:none;
+    padding:15px 25px;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:16px;
+    margin:10px;
+    transition:.3s;
+}
+
+button:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,114,255,.4);
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+    <h1>💻 Programa de aprendizaje de informática</h1>
+    <p>Aprende informática jugando</p>
+</header>
+
+<section>
+    <h1>🎯 Propósito</h1>
+    <p>El propósito de esta web es que niños y adolescentes puedan aprender lo básico de la informática mediante juegos interactivos.</p>
+</section>
+
+<section>
+    <h1>🎮 Juegos disponibles</h1>
+
+    <button onclick="window.location.href='/Partes del computador'">
+        Buscar las partes del computador
+    </button>
+
+    <button onclick="window.location.href='/robot_controler'">
+        Controla el robot
+    </button>
+
+</section>
+
+<section>
+    <h1>📚 Guías</h1>
+</section>
+
+</body>
+</html>
+
+
+    <div id="ai-button-container">
+        <button id="abrir-ai-btn" onclick="toggleAI()">
+            <span class="ai-icon">🧠</span> ANS AI
+        </button>
+    </div>
+
+    <div id="ai-chat-window" style="display: none;">
+        <div id="ai-header">
+            <div class="header-info">
+                <span class="status-dot"></span>
+                <span>ANS AI - Conectada</span>
+            </div>
+            <button id="cerrar-ai-btn" onclick="toggleAI()">✖</button>
+        </div>
+        
+        <div id="ai-messages">
+            <div class="mensaje-ai">
+            Saludos. Soy <strong>ANS AI</strong>, el sistema de inteligencia artificial avanzado creado por Aldrin(ANS). Estoy programada para analizar tus preguntas a profundidad. Si tienes dudas, solo pon un signo de interrogación (<strong>?</strong>) y lo investigaré detalladamente.
+            </div>
+        </div>
+        
+        <div id="ai-input-area">
+            <input type="text" id="ai-input" placeholder="Pregúntame algo (usa ? para análisis profundo)..." onkeypress="manejarEnter(event)" autocomplete="off">
+            <button id="enviar-ai-btn" onclick="procesarConsulta()">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        /* Contenedor del Botón */
+        #ai-button-container { position: fixed; bottom: 25px; right: 25px; z-index: 9999; }
+        #abrir-ai-btn { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; border: 2px solid #00f2fe; border-radius: 30px; padding: 12px 25px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; }
+        #abrir-ai-btn:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0, 242, 254, 0.5); border-color: #4facfe; }
+
+        /* Ventana Principal */
+        #ai-chat-window { position: fixed; bottom: 90px; right: 25px; width: 360px; height: 520px; background: rgba(20, 25, 30, 0.95); backdrop-filter: blur(10px); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid rgba(0, 242, 254, 0.3); display: flex; flex-direction: column; z-index: 10000; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; transition: opacity 0.3s ease; }
+        #ai-header { background: rgba(10, 15, 20, 0.9); color: #00f2fe; padding: 15px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 242, 254, 0.2); }
+        .header-info { display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 10px; height: 10px; background-color: #00f2fe; border-radius: 50%; box-shadow: 0 0 10px #00f2fe; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 242, 254, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0); } }
+
+        #cerrar-ai-btn { background: none; border: none; color: #888; cursor: pointer; font-size: 16px; transition: color 0.3s; }
+        #cerrar-ai-btn:hover { color: #ff4757; }
+
+        /* Área de Mensajes */
+        #ai-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        #ai-messages::-webkit-scrollbar { width: 6px; }
+        #ai-messages::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.3); border-radius: 10px; }
+
+        .mensaje-usuario { align-self: flex-end; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 12px 16px; border-radius: 15px 15px 0 15px; max-width: 85%; font-size: 14px; word-wrap: break-word; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.2); }
+        .mensaje-ai { align-self: flex-start; background: rgba(30, 40, 50, 0.8); color: #e0e0e0; padding: 12px 16px; border-radius: 15px 15px 15px 0; max-width: 85%; font-size: 14px; word-wrap: break-word; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05); }
+
+        .pensando { font-style: italic; color: #00f2fe; background: transparent; border: none; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .loader { border: 2px solid rgba(0, 242, 254, 0.2); border-top: 2px solid #00f2fe; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Área de Entrada */
+        #ai-input-area { display: flex; padding: 15px; background: rgba(10, 15, 20, 0.9); border-top: 1px solid rgba(0, 242, 254, 0.2); }
+        #ai-input { flex-grow: 1; padding: 12px 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 20px; color: white; outline: none; font-size: 14px; transition: border-color 0.3s; }
+        #ai-input:focus { border-color: #00f2fe; background: rgba(255,255,255,0.1); }
+        #ai-input::placeholder { color: #888; }
+        #enviar-ai-btn { background: #00f2fe; border: none; width: 45px; height: 45px; margin-left: 10px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.3); transition: transform 0.3s, background 0.3s; }
+        #enviar-ai-btn:hover { transform: scale(1.1); background: #4facfe; }
+    </style>
+
+    <script>
+        // ---------------------------------------------------------
+        // 1. INICIALIZACIÓN Y MEMORIA (Cerebro Local)
+        // ---------------------------------------------------------
+        let conocimientoAdquirido = JSON.parse(localStorage.getItem('ansMemoria')) || {};
+
+        // Base de datos de ANS AI (Ahora tiene consciencia de sí misma)
+        const conocimientoBase = {
+            "ans ai": "Soy ANS AI, una Inteligencia Artificial avanzada desarrollada por Aldrin Nicolas Salazar Avilas. Mi misión es procesar información, aprender en tiempo real y asistirte en el aprendizaje de tecnologías web.",
+            "quien eres": "Soy ANS AI. Fui programada como el 'cerebro' interactivo de esta plataforma para enseñarte sobre informática y programación.",
+            "creador": "Fui creada por Aldrin Nicolas Salazar Avilas, el desarrollador principal y mente maestra detrás de este proyecto.",
+            "aldrin": "Aldrin Nicolas Salazar Avilas es mi creador. Él programó mi interfaz y conectó mi lógica de aprendizaje.",
+            "propósito": "El propósito de esta web es que niños y adolescentes puedan aprender los elementos básicos de la informática de forma efectiva.",
+            "html": "HTML es el 'esqueleto' de tu página web. Define dónde van los textos y botones. No es un lenguaje de programación.",
+            "css": "CSS es la 'ropa' y la pintura de tu web. Define el diseño, los colores y la presentación visual.",
+            "javascript": "JavaScript es el 'sistema nervioso' de la web. Permite crear interfaces dinámicas y conectar datos sin recargar la página.",
+            "java": "Java es un lenguaje orientado a objetos usado para apps pesadas. Requiere el JDK para compilar. Es totalmente distinto a JavaScript.",
+            "flask": "Flask es tu servidor (backend) escrito en Python. Es el cerebro que administra las rutas."
+        };
+
+        // ---------------------------------------------------------
+        // 2. CONTROL DE INTERFAZ
+        // ---------------------------------------------------------
+        function toggleAI() {
+            const chat = document.getElementById('ai-chat-window');
+            chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'flex' : 'none';
+            if (chat.style.display === 'flex') {
+                document.getElementById('ai-input').focus();
+            }
+        }
+
+        function manejarEnter(event) {
+            if (event.key === "Enter") procesarConsulta();
+        }
+
+        function hacerScrollAbajo() {
+            const caja = document.getElementById('ai-messages');
+            caja.scrollTop = caja.scrollHeight;
+        }
+
+        // ---------------------------------------------------------
+        // 3. MOTOR DE PROCESAMIENTO PRINCIPAL (Con detección de ?)
+        // ---------------------------------------------------------
+        async function procesarConsulta() {
+            const input = document.getElementById('ai-input');
+            const consultaRaw = input.value.trim();
+            const consulta = consultaRaw.toLowerCase();
+            
+            if (!consultaRaw) return;
+
+            const caja = document.getElementById('ai-messages');
+            
+            // Mostrar mensaje del usuario
+            caja.innerHTML += `<div class="mensaje-usuario">${consultaRaw}</div>`;
+            input.value = '';
+            hacerScrollAbajo();
+
+            // ==========================================
+            // LÓGICA DE DETECCIÓN DE PREGUNTAS INTENSIVAS
+            // ==========================================
+            const esPregunta = consultaRaw.includes('?');
+            const idPensando = "pensando-" + Date.now();
+            
+            // Si tiene "?", ANS AI simula un proceso de pensamiento más complejo y largo
+            if (esPregunta) {
+                caja.innerHTML += `
+                    <div id="${idPensando}" class="mensaje-ai pensando">
+                        <div class="loader"></div> Analizando sintaxis de la pregunta...
+                    </div>`;
+                hacerScrollAbajo();
+
+                // Simulación multi-fase de razonamiento
+                setTimeout(() => {
+                    const el = document.getElementById(idPensando);
+                    if(el) el.innerHTML = `<div class="loader"></div> Extrayendo contexto y buscando en la red global...`;
+                }, 1000);
+            } else {
+                caja.innerHTML += `
+                    <div id="${idPensando}" class="mensaje-ai pensando">
+                        <div class="loader"></div> Procesando afirmación...
+                    </div>`;
+                hacerScrollAbajo();
+            }
+
+            // 1. Buscar en memoria local primero
+            let respuesta = buscarEnMemoriaLocal(consulta);
+
+            // 2. Búsqueda Web
+            if (!respuesta) {
+                respuesta = await buscarY_AprenderDeLaRed(consulta);
+            }
+
+            // Tiempo de respuesta dinámico: Piensa más tiempo si es una pregunta
+            const tiempoDeRespuesta = esPregunta ? 2500 : 800;
+
+            setTimeout(() => {
+                const elPensando = document.getElementById(idPensando);
+                if (elPensando) elPensando.remove();
+                
+                // Si es pregunta, le agrega un toque más analítico a la respuesta final
+                let respuestaFinal = esPregunta ? `<strong>Análisis completado:</strong><br><br>${respuesta}` : respuesta;
+                
+                caja.innerHTML += `<div class="mensaje-ai">${formatearRespuesta(respuestaFinal)}</div>`;
+                hacerScrollAbajo();
+            }, tiempoDeRespuesta);
+        }
+
+        // ---------------------------------------------------------
+        // 4. MÉTODOS DE BÚSQUEDA Y APRENDIZAJE
+        // ---------------------------------------------------------
+        function buscarEnMemoriaLocal(consulta) {
+            for (const clave in conocimientoAdquirido) {
+                if (consulta.includes(clave)) {
+                    return `Recuperado de mi base de datos evolutiva: ${conocimientoAdquirido[clave]}`;
+                }
+            }
+            
+            for (const clave in conocimientoBase) {
+                if (consulta.includes(clave)) {
+                    return conocimientoBase[clave];
+                }
+            }
+            return null;
+        }
+
+        async function buscarY_AprenderDeLaRed(consulta) {
+            let terminoBusqueda = limpiarConsultaParaBusqueda(consulta);
+            if (!terminoBusqueda) return "Detecto falta de contexto. Por favor, sé más específico sobre lo que deseas que investigue.";
+
+            try {
+                const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(terminoBusqueda)}`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.extract) {
+                        conocimientoAdquirido[terminoBusqueda.toLowerCase()] = data.extract;
+                        localStorage.setItem('ansMemoria', JSON.stringify(conocimientoAdquirido));
+                        return `He escaneado la red y aprendido algo nuevo sobre esto. ${data.extract}`;
+                    }
+                }
+                return `Mis algoritmos de búsqueda no encuentran una definición exacta de "${terminoBusqueda}". Intenta reformular tu consulta.`;
+            } catch (error) {
+                return "Experimentando interferencia de red. Solo mis módulos de memoria local están activos.";
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 5. PROCESAMIENTO DE LENGUAJE
+        // ---------------------------------------------------------
+        function limpiarConsultaParaBusqueda(texto) {
+            const palabrasIgnorar = ['que', 'es', 'un', 'una', 'el', 'la', 'los', 'las', 'de', 'para', 'como', 'funciona', 'significa', 'diferencia', 'entre', 'y', 'por', 'cual', '?'];
+            // Se eliminan los signos de interrogación para no romper la URL de búsqueda
+            let textoLimpio = texto.replace(/\?/g, '');
+            let palabras = textoLimpio.split(' ');
+            let conceptos = palabras.filter(p => !palabrasIgnorar.includes(p) && p.length > 2);
+            return conceptos.join(' ');
+        }
+
+        function formatearRespuesta(texto) {
+            return texto.replace(/\n/g, '<br><br>');
+        }
+    </script>
+</body>
+</html>
+<img src="https://imgur.com/bqlDn0g">

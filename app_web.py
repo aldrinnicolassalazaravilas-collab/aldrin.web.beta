@@ -100,7 +100,7 @@ def que_es_python():
 
 @app.route("/saludo")
 def saludo():
-    # Intenta obtener el nombre de los parámetros de la URL
+   
     nombre = request.args.get("nombre")
     if nombre:
         return f"<h1>Hola {nombre}, espero que disfrutes la web!</h1><a href='/'>Regresar a inicio</a>"
@@ -151,6 +151,7 @@ def apps():
         
           
           <h4>Entrar a ChatGPT</h4>
+            <a href="/">Regresar a inicio</a><br>
           """
 historial = []
 
@@ -399,12 +400,23 @@ def reloj():
 
     <a href="/">Regresar al inicio</a>
     """
+@app.route("/sistemas_de_cuentas", methods=["GET", "POST"])
+def sistemas_de_cuentas():
+    global cuentas
+    mensaje = request.form["mensaje"]
+    cuentas.append(mensaje)
+    return """
+    <h1>sistemas de cuentas</h1>
+    <input type="text" name="mensaje" placeholder="Escribe tu nombre de usuario">
+    <button type="submit">Enviar</button>
+    
+
 
    
      
 
 
-    
+    """
 if __name__ == "__main__":
     print("Iniciando servidor")
     app.run(debug=True)

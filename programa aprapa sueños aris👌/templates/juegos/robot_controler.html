@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Robot Commander PRO</title>
+<style>
+body{margin:0;background:#0b0f1a;color:#fff;font-family:Arial;text-align:center}
+h1{margin:12px}
+#top{display:flex;justify-content:center;gap:40px;font-size:22px;margin-bottom:10px}
+#game{display:flex;justify-content:center;gap:25px}
+#board{display:grid;grid-template-columns:repeat(8,56px);gap:4px;background:#111827;padding:10px;border-radius:10px}
+.cell{width:56px;height:56px;background:#1f2937;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.wall{background:linear-gradient(#666,#333)}
+.goal{background:gold}
+.player{box-shadow:0 0 10px #0f0}
+.panel{background:#111827;padding:12px;border-radius:10px;width:220px}
+button{width:95px;margin:4px;padding:10px;border:none;border-radius:8px;background:#374151;color:#fff;cursor:pointer}
+#popup{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center}
+#box{background:#182235;padding:25px;border-radius:14px}
+</style>
+</head>
+<body>
+<h1>🤖 Robot Commander</h1>
+<div id="top"><div>⭐ Score: <span id="score">0</span></div></div>
+<div id="game">
+<div id="board"></div>
+<div class="panel">
+<button onclick="add('U')">⬆</button>
+<button onclick="add('D')">⬇</button><br>
+<button onclick="add('L')">⬅</button>
+<button onclick="add('R')">➡</button><br>
+<button onclick="run()">▶ Ejecutar</button>
+<button onclick="location.href='/'">🏠 Inicio</button>
+<p id="cmds"></p>
+</div>
+</div>
+<div id="popup"><div id="box">
+<h2>🎉 ¡Felicitaciones!</h2>
+<p>Ganaste <b>100 puntos</b>.</p>
+<button onclick="nextMap()">Continuar</button>
+</div></div>
+<script>
+const SIZE=8;
+let score=0,cmds=[],running=false;
+let level=[],player={x:0,y:0};
+
+function gen(){
+ level=[];
+ let density=.15+Math.floor(score/300)*.05;
+ for(let y=0;y<SIZE;y++){
+  let r=[];
+  for(let x=0;x<SIZE;x++)r.push(Math.random()<density?1:0);
+  level.push(r);
+ }
+ for(let i=0;i<SIZE;i++){level[0][i]=0;level[i][SIZE-1]=0;}
+ level[0][0]=0;level[SIZE-1][SIZE-1]=2;
+ player={x:0,y:0};
+ draw();
+}
+function draw(){
+ board.innerHTML="";
+ for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+  let d=document.createElement("div");
+  d.className="cell";
+  if(level[y][x]==1){d.classList.add("wall");d.textContent="🪨";}
+  if(level[y][x]==2){d.classList.add("goal");d.textContent="⭐";}
+  if(player.x==x&&player.y==y){d.classList.add("player");d.textContent="🤖";}
+  board.appendChild(d);
+ }
+}
+function add(c){if(running)return;cmds.push(c);cmdsEl()}
+function cmdsEl(){cmds.innerText=cmds.join(" ")}
+function mv(c){
+ let nx=player.x,ny=player.y;
+ if(c=="U")ny--;if(c=="D")ny++;if(c=="L")nx--;if(c=="R")nx++;
+ if(nx>=0&&ny>=0&&nx<SIZE&&ny<SIZE&&level[ny][nx]!=1){player.x=nx;player.y=ny;}
+}
+const sleep=t=>new Promise(r=>setTimeout(r,t));
+async function run(){
+ if(running)return;
+ running=true;
+ let copy=[...cmds];cmds=[];cmdsEl();
+ for(const c of copy){
+   mv(c);draw();await sleep(180);
+   if(level[player.y][player.x]==2){
+      score+=100;
+      document.getElementById("score").textContent=score;
+      popup.style.display="flex";
+      running=false;
+      return;
+   }
+ }
+ running=false;
+}
+function nextMap(){popup.style.display="none";gen();}
+gen();
+</script>
+</body>
+</html>

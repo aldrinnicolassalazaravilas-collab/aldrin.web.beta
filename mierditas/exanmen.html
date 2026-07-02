@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Ciencias Naturales</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f0ebf8;
+            margin: 0;
+            padding: 20px;
+            color: #202124;
+        }
+        .form-container {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            border: 1px solid #dadce0;
+        }
+        .header-card {
+            border-top: 8px solid #673ab7;
+        }
+        h1 {
+            font-size: 24pt;
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-weight: 400;
+        }
+        .description {
+            font-size: 11pt;
+            color: #5f6368;
+            margin-bottom: 0;
+        }
+        .question-title {
+            font-size: 12pt;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 11pt;
+            cursor: pointer;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: #673ab7;
+        }
+        input[type="file"] {
+            font-size: 11pt;
+            padding: 10px 0;
+        }
+        .submit-btn {
+            background-color: #673ab7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background-color 0.2s;
+        }
+        .submit-btn:hover {
+            background-color: #5e35b1;
+        }
+        /* Estilos para el cuadro de resultados */
+        #resultado-box {
+            display: none;
+            background-color: #e6f4ea;
+            border-left: 8px solid #1e8e3e;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 16pt;
+            color: #137333;
+        }
+        .nota-final {
+            font-size: 11pt;
+            color: #5f6368;
+            margin-top: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <form id="examenForm">
+        <div class="card header-card">
+            <h1>Examen de Ciencias Naturales</h1>
+            <p class="description">Cuestionario de 10 preguntas. Lee detenidamente cada pregunta y selecciona la respuesta correcta.</p>
+        </div>
+
+        <div class="card">
+            <div class="question-title">1. ¿Cómo se llama el proceso que realizan los animales para sobrevivir?</div>
+            <label class="option"><input type="radio" name="q1" value="A"> La nutrición biológica</label>
+            <label class="option"><input type="radio" name="q1" value="B"> La nutrición celular</label>
+            <label class="option"><input type="radio" name="q1" value="C"> La nutrición alimenticia</label>
+            <label class="option"><input type="radio" name="q1" value="D"> La nutrición fotosintética</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">2. ¿Cuáles son los tipos de respiración que existen en los animales?</div>
+            <label class="option"><input type="radio" name="q2" value="A"> Respiración celular, estomática y radicular</label>
+            <label class="option"><input type="radio" name="q2" value="B"> Respiración solar, terrestre y acuática</label>
+            <label class="option"><input type="radio" name="q2" value="C"> Respiración aeróbica primaria y secundaria</label>
+            <label class="option"><input type="radio" name="q2" value="D"> Respiración cutánea, branquial, traqueal y pulmonar</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">3. ¿Qué tipo de respiración existe en la lombriz?</div>
+            <label class="option"><input type="radio" name="q3" value="A"> Respiración pulmonar</label>
+            <label class="option"><input type="radio" name="q3" value="B"> Respiración cutánea</label>
+            <label class="option"><input type="radio" name="q3" value="C"> Respiración traqueal</label>
+            <label class="option"><input type="radio" name="q3" value="D"> Respiración branquial</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">4. ¿Dónde inicia el proceso de ingestión en los animales?</div>
+            <label class="option"><input type="radio" name="q4" value="A"> En el estómago</label>
+            <label class="option"><input type="radio" name="q4" value="B"> En el intestino grueso</label>
+            <label class="option"><input type="radio" name="q4" value="C"> En la boca</label>
+            <label class="option"><input type="radio" name="q4" value="D"> En el esófago</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">5. ¿Cuáles son las fases del proceso digestivo?</div>
+            <label class="option"><input type="radio" name="q5" value="A"> Masticación, deglución y excreción</label>
+            <label class="option"><input type="radio" name="q5" value="B"> Respiración, circulación y transpiración</label>
+            <label class="option"><input type="radio" name="q5" value="C"> Ingestión, digestión, absorción y eliminación</label>
+            <label class="option"><input type="radio" name="q5" value="D"> Asimilación, síntesis y degradación</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">6. ¿Cuáles son las dos formas que existen para generar movimiento en los animales (células o microorganismos)?</div>
+            <label class="option"><input type="radio" name="q6" value="A"> Mediante aletas y patas</label>
+            <label class="option"><input type="radio" name="q6" value="B"> Mediante cilios y mediante flagelos</label>
+            <label class="option"><input type="radio" name="q6" value="C"> Mediante alas y plumas</label>
+            <label class="option"><input type="radio" name="q6" value="D"> Mediante huesos y músculos</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">7. ¿Cuál es el propósito de la ingestión en los animales?</div>
+            <label class="option"><input type="radio" name="q7" value="A"> Eliminar los desechos líquidos del cuerpo</label>
+            <label class="option"><input type="radio" name="q7" value="B"> Producir oxígeno para la sangre</label>
+            <label class="option"><input type="radio" name="q7" value="C"> Incorporar alimentos al organismo para obtener nutrientes y energía</label>
+            <label class="option"><input type="radio" name="q7" value="D"> Regular la temperatura corporal</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">8. ¿Qué gas toman los animales cuando respiran y qué expulsan después?</div>
+            <label class="option"><input type="radio" name="q8" value="A"> Toman dióxido de carbono y expulsan oxígeno</label>
+            <label class="option"><input type="radio" name="q8" value="B"> Toman oxígeno y expulsan dióxido de carbono (CO2)</label>
+            <label class="option"><input type="radio" name="q8" value="C"> Toman nitrógeno y expulsan metano</label>
+            <label class="option"><input type="radio" name="q8" value="D"> Toman hidrógeno y expulsan monóxido de carbono</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">9. ¿Cuál es el gas que permite a los animales realizar todas sus actividades y les da energía en el proceso de alimentarse?</div>
+            <label class="option"><input type="radio" name="q9" value="A"> El hidrógeno</label>
+            <label class="option"><input type="radio" name="q9" value="B"> El dióxido de carbono</label>
+            <label class="option"><input type="radio" name="q9" value="C"> El nitrógeno</label>
+            <label class="option"><input type="radio" name="q9" value="D"> El oxígeno (O2)</label>
+        </div>
+
+        <div class="card">
+            <div class="question-title">10. Actividad práctica: Realiza un dibujo de dos individuos con respiración pulmonar y sube la foto de tu dibujo aquí.</div>
+            <p class="description" style="margin-bottom: 10px;">Sube un archivo de imagen (JPG, PNG)</p>
+            <input type="file" name="q10_dibujo" accept="image/png, image/jpeg">
+        </div>
+
+        <div style="text-align: right;">
+            <button type="button" class="submit-btn" onclick="calcularResultado()">Ver Resultado del Examen</button>
+        </div>
+        
+        <div id="resultado-box" class="card"></div>
+    </form>
+</div>
+
+<script>
+    function calcularResultado() {
+        // Clave de respuestas correctas
+        const respuestasCorrectas = {
+            q1: 'B',
+            q2: 'D',
+            q3: 'B',
+            q4: 'C',
+            q5: 'C',
+            q6: 'B',
+            q7: 'C',
+            q8: 'B',
+            q9: 'D'
+        };
+
+        let puntaje = 0;
+        let totalPreguntas = 9; // Son 9 de opción múltiple
+
+        // Revisar cada pregunta
+        for (let i = 1; i <= totalPreguntas; i++) {
+            let opciones = document.getElementsByName('q' + i);
+            for (let j = 0; j < opciones.length; j++) {
+                if (opciones[j].checked) {
+                    // Si la opción seleccionada coincide con la correcta, sumar un punto
+                    if (opciones[j].value === respuestasCorrectas['q'+i]) {
+                        puntaje++;
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Mostrar el resultado
+        let resultadoBox = document.getElementById('resultado-box');
+        resultadoBox.style.display = 'block';
+        
+        let porcentaje = Math.round((puntaje / totalPreguntas) * 100);
+        
+        resultadoBox.innerHTML = `<strong>¡Examen Completado!</strong><br>
+                                  Tu puntuación es de: <strong>${puntaje} / ${totalPreguntas}</strong> correctas. (${porcentaje}%)
+                                  <span class="nota-final">*Nota: La pregunta 10 (el dibujo) no se califica automáticamente y debe ser revisada por tu profesor.</span>`;
+        
+        // Bajar la pantalla hasta el resultado
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>

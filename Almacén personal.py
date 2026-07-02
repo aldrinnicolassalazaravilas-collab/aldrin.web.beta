@@ -79,5 +79,11 @@ print("Mi papá se llama Aldrin Sr y tiene 55 años.")
 print(nombre_dad)
 print(edad_dad)
 
+progreso = input("¿quieres progresar? ")
+if progreso == "si":
+    print("¡Excelente! ¡Sigue adelante!")
+else: print("valiendo verga")
+
+
 print("Fin del programa.")
  

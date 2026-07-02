@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PC Finder Confusion</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  background:#000;
+  font-family:Arial;
+  overflow:hidden;
+}
+
+#game{
+  flex:3;
+  position:relative;
+}
+
+#light{
+  position:absolute;
+  width:350px;
+  height:350px;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(circle,
+    rgba(255,255,210,0.4),
+    rgba(255,255,210,0.12),
+    transparent 70%);
+  transform:translate(-50%,-50%);
+}
+
+#darkness{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at center,
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0.8) 55%,
+    rgba(0,0,0,0.98) 80%);
+}
+
+.item{
+  position:absolute;
+  width:150px;
+  height:120px;
+  background:#111;
+  border:1px solid #333;
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  cursor:pointer;
+}
+
+.item img{
+  width:80px;
+  height:80px;
+  object-fit:contain;
+}
+
+.item span{
+  color:white;
+  font-size:12px;
+}
+
+/* PANEL */
+#side{
+  flex:1;
+  background:#0f0f0f;
+  color:white;
+  padding:12px;
+  border-left:2px solid #222;
+}
+
+.bar{
+  background:#1a1a1a;
+  margin:6px 0;
+  padding:8px;
+}
+
+.ok{ background:#1f8f3a; }
+
+button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  background:#222;
+  color:white;
+  border:1px solid #333;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#333;
+}
+
+#progress{
+  margin:10px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+  <div id="light"></div>
+  <div id="darkness"></div>
+</div>
+
+<div id="side">
+
+<h2>🖥️ PC FINDER</h2>
+
+<div id="CPU" class="bar">CPU ❌</div>
+<div id="RAM" class="bar">RAM ❌</div>
+<div id="GPU" class="bar">GPU ❌</div>
+<div id="SSD" class="bar">SSD ❌</div>
+<div id="PSU" class="bar">PSU ❌</div>
+<div id="MOUSE" class="bar">MOUSE ❌</div>
+<div id="MOTHERBOARD" class="bar">MOTHERBOARD ❌</div>
+<div id="KEYBOARD" class="bar">KEYBOARD ❌</div>
+<div id="MONITOR" class="bar">MONITOR ❌</div>
+<div id="disco_duro" class="bar">DISCO DURO ❌</div>
+<div id="progress">0 / 10</div>
+
+<button onclick="resetGame()">🔄 Reiniciar</button>
+<button onclick="goHome()">🏠 Ir a inicio</button>
+
+</div>
+
+<script>
+
+const game=document.getElementById("game");
+const light=document.getElementById("light");
+
+let mouse={x:0,y:0};
+let found=0;
+let items=[];
+
+document.addEventListener("mousemove",e=>{
+  mouse.x=e.clientX;
+  mouse.y=e.clientY;
+  light.style.left=mouse.x+"px";
+  light.style.top=mouse.y+"px";
+});
+
+/* ✔ PIEZAS REALES */
+const parts={
+CPU:"https://commons.wikimedia.org/wiki/Special:FilePath/Intel%20i9-14900K.webp",
+RAM:"https://commons.wikimedia.org/wiki/Special:FilePath/Memoria-ram-2-gb-scaled.webp",
+GPU:"https://commons.wikimedia.org/wiki/Special:FilePath/ATI%20Radeon%20HD%205870%20Graphics%20Card-vertical%20-%20oblique%20view.jpg",
+SSD:"https://commons.wikimedia.org/wiki/Special:FilePath/MSATA%20SSD.jpg",
+PSU:"https://commons.wikimedia.org/wiki/Special:FilePath/HP-Compaq-PC-Power-Supply%20IMG%208112.JPG",
+MOUSE:"https://commons.wikimedia.org/wiki/Special:FilePath/Computer%20mouse.jpg",
+
+
+MOTHERBOARD:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Amiga_3000T_motherboard_without_annotations.jpg/960px-Amiga_3000T_motherboard_without_annotations.jpg",
+KEYBOARD:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Computer_keyboard_US.svg/960px-Computer_keyboard_US.svg.png",
+MONITOR:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/MonitorLCDlcd.svg/960px-MonitorLCDlcd.svg.png",
+disco_duro:"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Laptop-hard-drive-exposed.jpg/960px-Laptop-hard-drive-exposed.jpg"
+};
+
+
+/* ❗ FALSOS */
+const fake=[
+  {name:"ventilador CPU",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Intel_CPU_Fan_%2826356650813%29.jpg/960px-Intel_CPU_Fan_%2826356650813%29.jpg"},
+  {name:"Disipador",img:"hhttps://upload.wikimedia.org/wikipedia/commons/thumb/8/84/ASRock_GE_PRO-HT_-_CPU_on_heat_sink-1032.jpg/960px-ASRock_GE_PRO-HT_-_CPU_on_heat_sink-1032.jpgttps://upload.wikimedia.org/wikipedia/commons/4/4f/Heatsink.jpg"},
+  {name:"Cable SATA",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/SATA_cables_%282026%29.jpg/960px-SATA_cables_%282026%29.jpg"},
+  {name:"Ventilador caja",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Smr-mme-fan-caja.jpg/960px-Smr-mme-fan-caja.jpg"}
+];
+
+function collect(id){
+  const el=document.getElementById(id);
+  if(!el.classList.contains("ok")){
+    el.classList.add("ok");
+    el.innerText=id+" ✔";
+    found++;
+    document.getElementById("progress").innerText=found+" / 10";
+
+if(found===10){
+    setTimeout(()=>{
+        alert("🎉 ¡Ganaste! Encontraste todas las partes del computador.");
+    },200);
+}
+  }
+}
+
+/* SPAWN */
+function spawn(x,y,type,isReal){
+  const el=document.createElement("div");
+  el.className="item";
+  el.style.left=x+"px";
+  el.style.top=y+"px";
+
+  let img,name;
+
+  if(isReal){
+    img=parts[type];
+    name=type;
+  }else{
+    const f=fake[Math.floor(Math.random()*fake.length)];
+    img=f.img;
+    name=f.name;
+  }
+
+  el.innerHTML=`
+    <img src="${img}" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/3/3f/Question_mark_white.png'">
+    <span>${name}</span>
+  `;
+
+  el.onclick=()=>{
+    if(isReal) collect(type);
+    el.remove();
+  };
+
+  game.appendChild(el);
+  items.push(el);
+}
+
+/* GENERAR */
+function generate(){
+
+  const w=window.innerWidth*0.7;
+  const h=window.innerHeight*0.9;
+
+  Object.keys(parts).forEach(p=>{
+
+  const x = 20 + Math.random() * (w - 180);
+  const y = 20 + Math.random() * (h - 150);
+
+  spawn(
+    x,
+    y,
+    p,
+    true
+  );
+
+});
+
+  for(let i=0;i<25;i++){
+    const keys=Object.keys(parts);
+    spawn(
+      Math.random()*w,
+      Math.random()*h,
+      keys[0],
+      false
+    );
+  }
+}
+
+/* LUZ */
+function update(){
+  document.querySelectorAll(".item").forEach(el=>{
+    const r=el.getBoundingClientRect();
+    const dx=r.left-mouse.x;
+    const dy=r.top-mouse.y;
+    const d=Math.hypot(dx,dy);
+    el.style.opacity=d<150?1:0;
+  });
+
+  requestAnimationFrame(update);
+}
+
+/* REINICIO */
+function resetGame(){
+  items.forEach(i=>i.remove());
+  items=[];
+  found=0;
+  document.querySelectorAll(".bar").forEach(b=>b.classList.remove("ok"));
+ document.getElementById("progress").innerText="0 / 10";
+  generate();
+}
+
+/* INICIO */
+function goHome(){
+  window.location.href="/";
+}
+
+generate();
+update();
+
+</script>
+
+</body>
+</html>

@@ -1,3 +1,10 @@
+from flask import Flask, request
+import datetime
+import time
+
+
+
+
 usuarios = ["Aldrin 777", "maicol 67", "maria 1234"]
 
 while True:
@@ -13,6 +20,7 @@ while True:
 
         if respuesta == "si":
             nuevo_usuario = input("Ingresa tu nuevo nombre de usuario: ")
+ 
             usuarios.append(nuevo_usuario)
             print("Cuenta creada exitosamente, bienvenido", nuevo_usuario)
 
